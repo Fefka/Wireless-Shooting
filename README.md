@@ -10,7 +10,8 @@ Project Idea:
 Wireless Shooting is a defensive system based on deauthentication attacks, designed to neutralize enemy drones by disrupting their Wi-Fi connection. Our team has developed a system involving three autonomous drones that collaboratively locate and track an enemy drone. Each drone transmits its coordinates via a serial interface. These data are processed by an external machine that visualizes their positions on a map using the Matplotlib library and calculates the location of the enemy drone through a triangulation algorithm. 
  
 Project Functionality: 
-Deauthentication Attack: Three drones work together to disrupt the Wi-Fi connection of the enemy drone, causing it to lose control. 
+
+Deauthentication Attack: Three drones work together to disrupt the Wi-Fi connection of the enemy drone, causing it to lose control.
 Target Localization: Each drone monitors the enemy drone’s position by forming circles with a 100 m radius, simulating the Wi-Fi signal range. 
 Triangulation Algorithm: The enemy drone's position is calculated as the intersection of the signal range circles, enabling precise target localization. 
 Visualization: The data are displayed on a real-time map, allowing the operator to monitor the situation continuously. 
