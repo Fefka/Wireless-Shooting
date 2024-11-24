@@ -1,0 +1,87 @@
+import serial
+import time
+import random
+
+def generate_fake_gps(lat_center=52.0718, lon_center=23.6032, square_size=100):
+    """
+    Generuje fikcyjne dane GPS w formacie NMEA (GGA - Global Positioning System Fix Data),
+    z ograniczeniem do obszaru określonego wielkością kwadratu w pobliżu podanych współrzędnych.
+    
+    Args:
+        lat_center (float): Środkowa szerokość geograficzna obszaru.
+        lon_center (float): Środkowa długość geograficzna obszaru.
+        square_size (float): Rozmiar kwadratu w metrach (domyślnie 100 m).
+    
+    Returns:
+        str: Zdanie NMEA zawierające dane GPS.
+    """
+    # Przeliczenie kwadratu w metrach na stopnie (~1 stopień ≈ 111 000 m na szerokości geograficznej)
+    lat_offset = random.uniform(-square_size / 2, square_size / 2) / 111_000
+    lon_offset = random.uniform(-square_size / 2, square_size / 2) / (111_000 * abs(lat_center))
+
+    latitude = lat_center + lat_offset
+    longitude = lon_center + lon_offset
+    altitude = random.uniform(100, 200)  # Losowa wysokość w metrach (100-200 m)
+
+    # Konwersja współrzędnych na format NMEA
+    lat_deg = int(abs(latitude))
+    lat_min = (abs(latitude) - lat_deg) * 60
+    lat_dir = 'N' if latitude >= 0 else 'S'
+
+    lon_deg = int(abs(longitude))
+    lon_min = (abs(longitude) - lon_deg) * 60
+    lon_dir = 'E' if longitude >= 0 else 'W'
+
+    # Generowanie zdania GPGGA
+    gga_sentence = f"GPGGA,{time.strftime('%H%M%S')},{lat_deg:02d}{lat_min:07.4f},{lat_dir}," \
+                   f"{lon_deg:03d}{lon_min:07.4f},{lon_dir},1,08,1.0,{altitude:.1f},M,0.0,M,,"
+    
+    # Obliczenie sumy kontrolnej
+    checksum = calculate_checksum(gga_sentence)
+    return f"${gga_sentence}*{checksum:02X}"
+
+def calculate_checksum(nmea_sentence):
+    """
+    Oblicza sumę kontrolną (XOR) dla zdań NMEA.
+    
+    Args:
+        nmea_sentence (str): Zdanie NMEA bez znaku '$' i sumy kontrolnej.
+    
+    Returns:
+        int: Obliczona suma kontrolna.
+    """
+    checksum = 0
+    for char in nmea_sentence:
+        checksum ^= ord(char)
+    return checksum
+
+def main():
+    """
+    Główna funkcja programu - generuje dane GPS i wysyła je na port szeregowy.
+    """
+    serial_port = '/dev/ttyUSB0'  # Port szeregowy
+    baud_rate = 9600  # Prędkość transmisji
+
+    try:
+        # Otwieranie portu szeregowego
+        with serial.Serial(serial_port, baud_rate, timeout=1) as ser:
+            print(f"Połączono z {serial_port} na prędkości {baud_rate} bps.")
+            
+            while True:
+                # Generowanie danych GPS
+                nmea_data = generate_fake_gps()
+                print(f"Wysyłanie: {nmea_data}")
+                
+                # Wysyłanie danych na port szeregowy
+                ser.write((nmea_data + '\r\n').encode('ascii'))
+                
+                # Odczekaj 1 sekundę przed kolejną iteracją
+                time.sleep(1)
+    
+    except serial.SerialException as e:
+        print(f"Błąd otwarcia portu szeregowego: {e}")
+    except KeyboardInterrupt:
+        print("\nZakończono działanie programu.")
+
+if __name__ == "__main__":
+    main()
